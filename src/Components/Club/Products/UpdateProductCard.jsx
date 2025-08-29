@@ -16,12 +16,10 @@ import { useNavigate } from "react-router-dom";
 import { Store } from "../../../Api/Club/Products/Store";
 import { GetAllSports } from "../../../Api/Club/InfoApi/GetAllSports";
 import { FetchCategories } from "../../../Api/Club/Products/FetchCategories";
-import { useParams } from "react-router-dom";
 import { FetchOneProduct } from "../../../Api/Club/Products/FetchOneProduct";
 import { UpdateProductApi } from "../../../Api/Club/Products/UpdateProductApi";
-
-export default function UpdateProductCard() {
-  const { id } = useParams();
+const BASE_URL = "https://dashboard.stars-gate.com";
+export default function UpdateProductCard(prop) {
   const { t } = useTranslation();
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -61,6 +59,9 @@ export default function UpdateProductCard() {
     shop_icon: "",
     url: "",
   });
+  useEffect(() => {
+    setProduct(prop.product);
+  }, []);
   const handleChange = async (e) => {
     const { name, value, files } = e.target;
 
@@ -104,10 +105,10 @@ export default function UpdateProductCard() {
       if (product.image) {
         formData.append("image", product.image);
       }
-      const result = await UpdateProductApi(formData, id);
+      const result = await UpdateProductApi(formData, prop.product.id);
       console.log("update product", result);
       if (result) {
-        navigate("/products");
+        prop.onSuccess(); 
       }
     } catch (err) {
       const validationErrors = {};
@@ -159,7 +160,7 @@ export default function UpdateProductCard() {
     const FetchProduct = async () => {
       setLoading(true);
       try {
-        const response = await FetchOneProduct(id);
+        const response = await FetchOneProduct(prop.product.id);
         if (response?.data) {
           console.log("Success to fetch one product", response.data);
           setProduct(response.data);
@@ -171,23 +172,27 @@ export default function UpdateProductCard() {
       }
     };
     FetchProduct();
-  }, [id]);
+  }, [prop.product.id]);
+  // input style
+  const commonInputSx = {
+    mb: 2,
+    width: "100%",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "8px",
+      background: "#F5F5F7",
+    },
+  };
   return (
     <Box
       onSubmit={handleSubmit}
       component="form"
       encType="multipart/form-data"
       sx={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        textAlign: "center",
-        alignItems: "center",
         p: { xs: 0, sm: 3, md: 5 },
-        gap: 2,
         display: "flex",
         flexDirection: "column",
+        gap: 2,
+        alignItems: "center",
         width: { xs: "90%", sm: "80%", md: "900px", lg: "900px" },
         height: { xs: "450px" },
         maxWidth: "90%",
@@ -201,186 +206,318 @@ export default function UpdateProductCard() {
           fontSize: { xs: "14px", sm: "24px", md: "32px" },
         }}
       >
-        {t("update product")}
+        {t("product information")}
       </Typography>
       <Box
         sx={{
-          width: "100%",
-          mt: 2,
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "2fr 2fr",
-          },
-          px: { xs: 2, sm: 3 },
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           gap: 3,
+          alignItems: "center",
         }}
       >
-        <TextField
-          sx={{ background: input }}
-          placeholder={t("enter the product name")}
-          name="name"
-          variant="outlined"
-          value={product.name || ""}
-          onChange={handleChange}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-        />
-        <TextField
-          sx={{ background: input }}
-          placeholder={t("enter the product url")}
-          name="url"
-          variant="outlined"
-          value={product.url || ""}
-          onChange={handleChange}
-          error={Boolean(errors.url)}
-          helperText={errors.url}
-        />
-        {!loadingSports &&
-        sports.some((sport) => sport.id === Number(news.sport_id)) ? (
-          <TextField
-            sx={{ background: input }}
-            label={t("choose your sport")}
-            select
-            variant="outlined"
-            onChange={handleChange}
-            value={news.sport_id || ""}
-            name="sport_id"
-            error={Boolean(errors.sport_id)}
-            helperText={errors.sport_id}
-          >
-            <MenuItem value="" disabled>
-              {t("choose your sport")}
-            </MenuItem>
-            {sports.map((el) => (
-              <MenuItem key={el.id} value={el.id}>
-                {el.name}
-              </MenuItem>
-            ))}
-          </TextField>
-        ) : (
-          <TextField
-            sx={{ background: input }}
-            label={t("choose your sport")}
-            select
-            variant="outlined"
-            onChange={handleChange}
-            value=""
-            name="sport_id"
-            error={Boolean(errors.sport_id)}
-            helperText={errors.sport_id}
-          >
-            <MenuItem value="" disabled>
-              {loadingSports ? t("loading...") : t("no sports available")}
-            </MenuItem>
-          </TextField>
-        )}
-        <TextField
-          sx={{ background: input }}
-          label={t("choose your catrgory")}
-          select
-          variant="outlined"
-          onChange={handleChange}
-          value={product.category_id || ""}
-          name="category_id"
-          error={Boolean(errors.category_id)}
-          helperText={errors.category_id}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
-          <MenuItem value="" disabled>
-            {t("choose your catrgory")}
-          </MenuItem>
-          {loadingCategories ? (
-            <MenuItem disabled>
-              <CircularProgress size={20} />
-              &nbsp; {t("loading...")}
-            </MenuItem>
-          ) : categories.length > 0 ? (
-            categories.map((el) => (
-              <MenuItem key={el.id} value={el.id}>
-                {el.name}
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="name">
+              Product Name
+            </label>
+            <TextField
+              size="small"
+              id="name"
+              name="name"
+              placeholder="Type"
+              value={product.name}
+              onChange={handleChange}
+              sx={commonInputSx}
+              error={Boolean(errors.name)}
+              helperText={errors.name}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="url">
+              Product URL
+            </label>
+            <TextField
+              size="small"
+              id="url"
+              name="url"
+              placeholder="Type"
+              value={product.url}
+              onChange={handleChange}
+              sx={commonInputSx}
+              error={Boolean(errors.url)}
+              helperText={errors.url}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="sport">
+              Sport
+            </label>
+            <TextField
+              size="small"
+              id="sport"
+              sx={commonInputSx}
+              select
+              variant="outlined"
+              onChange={handleChange}
+              value={product.sport_id}
+              name="sport_id"
+              error={Boolean(errors.sport_id)}
+              helperText={errors.sport_id}
+            >
+              <MenuItem value="" disabled>
+                {t("choose your sport")}
               </MenuItem>
-            ))
-          ) : (
-            <MenuItem disabled>{t("no categories available")}</MenuItem>
-          )}
-        </TextField>
-        <TextField
-          sx={{ background: input }}
-          placeholder={t("enter the shop name")}
-          name="shop_name"
-          variant="outlined"
-          value={product.shop_name || ""}
-          onChange={handleChange}
-          error={Boolean(errors.shop_name)}
-          helperText={errors.shop_name}
-        />
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          sx={{ background: input }}
-          placeholder={t("enter the description")}
-          name="description"
-          variant="outlined"
-          value={product.description || ""}
-          onChange={handleChange}
-          error={Boolean(errors.description)}
-          helperText={errors.description}
-        />
+              {loadingSports ? (
+                <MenuItem disabled>
+                  <CircularProgress size={20} />
+                  &nbsp; {t("loading...")}
+                </MenuItem>
+              ) : sports.length > 0 ? (
+                sports.map((el) => (
+                  <MenuItem key={el.id} value={el.id}>
+                    {el.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>{t("no sports available")}</MenuItem>
+              )}
+            </TextField>
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="category">
+              category
+            </label>
+            <TextField
+              sx={commonInputSx}
+              size="small"
+              select
+              id="category"
+              variant="outlined"
+              onChange={handleChange}
+              value={product.category_id}
+              name="category_id"
+              error={Boolean(errors.category_id)}
+              helperText={errors.category_id}
+            >
+              <MenuItem value="" disabled>
+                {t("choose your catrgory")}
+              </MenuItem>
+              {loadingCategories ? (
+                <MenuItem disabled>
+                  <CircularProgress size={20} />
+                  &nbsp; {t("loading...")}
+                </MenuItem>
+              ) : categories.length > 0 ? (
+                categories.map((el) => (
+                  <MenuItem key={el.id} value={el.id}>
+                    {el.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>{t("no categories available")}</MenuItem>
+              )}
+            </TextField>
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="shop">
+              Shop Name
+            </label>
+            <TextField
+              sx={commonInputSx}
+              size="small"
+              id="shop"
+              placeholder="Type"
+              name="shop_name"
+              variant="outlined"
+              value={product.shop_name}
+              onChange={handleChange}
+              error={Boolean(errors.shop_name)}
+              helperText={errors.shop_name}
+            />
+          </Box>
+        </Box>
         <Box>
-          <Typography variant="body1" sx={{ textAlign: "start", mb: 1 }}>
-            {t("upload the product image")}
-          </Typography>
-          <input
-            type="file"
-            name="image"
-            accept="image/png, image/jpeg"
-            onChange={handleChange}
-            style={{
-              background: input,
-              border: errors.image ? "1px solid red" : "1px solid #ccc",
-              padding: "8px",
-              borderRadius: "6px",
-              width: "100%",
+          <Box sx={{ flex: 1 }}>
+            <label style={{ color: "#525252" }} htmlFor="description">
+              Description
+            </label>
+            <TextField
+              fullWidth
+              multiline
+              sx={{
+                mb: 2,
+                width: "100%",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  background: "#F5F5F7",
+                },
+              }}
+              rows={3}
+              placeholder={t("Type Description")}
+              name="description"
+              id="description"
+              variant="outlined"
+              value={product.description}
+              onChange={handleChange}
+              error={Boolean(errors.description)}
+              helperText={errors.description}
+            />
+          </Box>
+
+          <Box
+            component="div"
+            sx={{
+              width: 150,
+              height: 150,
+              margin: "0 auto",
+              borderRadius: "8px",
+              overflow: "hidden",
+              cursor: "pointer",
+              border: "1px solid #ccc",
             }}
-          />
-          {errors.image && (
-            <Typography variant="caption" color="error">
-              {errors.image}
-            </Typography>
-          )}
+            onClick={() => document.getElementById("fileInput").click()}
+          >
+            {product.image instanceof File ? (
+              <img
+                src={URL.createObjectURL(product.image)}
+                alt="preview"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : product.image ? (
+              <img
+                src={`${BASE_URL}/${product.image}`}
+                alt="product"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  flex: { xs: "1 1 100%", sm: "1 1 60%" },
+                  background: "#F5F5F7",
+                  padding: 4,
+                  textAlign: "center",
+                }}
+              >
+                <input
+                  type="file"
+                  name="image"
+                  id="fileInput"
+                  accept="image/png, image/jpeg"
+                  onChange={handleChange}
+                  style={{
+                    display: "none",
+                  }}
+                />
+                <Box
+                  component="button"
+                  onClick={() => document.getElementById("fileInput").click()}
+                  sx={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    padding: 0,
+                    transition: "transform 0.2s ease, opacity 0.2s ease",
+                    "&:hover": {
+                      transform: "scale(1.1)",
+                      opacity: 0.8,
+                    },
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="70"
+                    height="70"
+                    viewBox="0 0 20 20"
+                  >
+                    <g fill="none">
+                      <path
+                        fill="url(#SVGpAhxubuz)"
+                        d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"
+                      />
+                      <path
+                        fill="url(#SVG9oSeOcyx)"
+                        d="m16.122 16.121l-5.238-5.237a1.25 1.25 0 0 0-1.768 0L3.88 16.12A3 3 0 0 0 6 17h8a3 3 0 0 0 2.122-.879"
+                      />
+                      <circle
+                        cx="12.5"
+                        cy="7.5"
+                        r="1.5"
+                        fill="url(#SVG3UbN1wRo)"
+                      />
+                      <defs>
+                        <linearGradient
+                          id="SVG9oSeOcyx"
+                          x1="8.251"
+                          x2="9.715"
+                          y1="10.518"
+                          y2="17.343"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop stopColor="#b3e0ff" />
+                          <stop offset="1" stopColor="#8cd0ff" />
+                        </linearGradient>
+                        <linearGradient
+                          id="SVG3UbN1wRo"
+                          x1="11.9"
+                          x2="12.996"
+                          y1="5.667"
+                          y2="9.612"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop stopColor="#fdfdfd" />
+                          <stop offset="1" stopColor="#b3e0ff" />
+                        </linearGradient>
+                        <radialGradient
+                          id="SVGpAhxubuz"
+                          cx="0"
+                          cy="0"
+                          r="1"
+                          gradientTransform="rotate(51.687 3.782 -5.018)scale(38.7123 35.2114)"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop offset=".338" stopColor="#0fafff" />
+                          <stop offset=".529" stopColor="#367af2" />
+                        </radialGradient>
+                      </defs>
+                    </g>
+                  </svg>
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ fontSize: "12px", color: "#1669B6" }}
+                >
+                  {t("upload image")}
+                </Typography>
+                {errors.image && (
+                  <Typography variant="caption" color="error">
+                    {errors.image}
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
         </Box>
       </Box>
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <Button
-          type="submit"
-          variant="contained"
-          sx={{
-            background: mainColor,
-            p: 1,
-            fontWeight: "bold",
-            width: isMobile ? "90px" : "100px",
-            marginRight: 3,
-            "&:hover": { opacity: 0.5 },
-          }}
-        >
-          {t("update")}
-        </Button>
-        <Button
-          onClick={() => navigate("/products")}
-          variant="contained"
-          sx={{
-            background: mainColor,
-            p: 1,
-            fontWeight: "bold",
-            width: isMobile ? "90px" : "100px",
-            marginRight: 3,
-            "&:hover": { opacity: 0.5 },
-          }}
-        >
-          {t("back")}
-        </Button>
-      </Box>
+      <Button
+        type="submit"
+        variant="contained"
+        sx={{
+          background: mainColor,
+          p: 1,
+          fontWeight: "bold",
+          width: isMobile ? "90px" : "100px",
+          marginRight: 3,
+          "&:hover": { opacity: 0.5 },
+        }}
+      >
+        Update Product
+      </Button>
     </Box>
   );
 }

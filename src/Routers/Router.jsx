@@ -12,6 +12,9 @@ import ClubDashboard from "../Pages/Club/ClubDashboard";
 import ShowSuggestionsVideos from "../Pages/Club/Suggestions videos/ShowSuggestionsVideos";
 import PlayerInfo from "../Pages/Club/Player/PlayerInfo";
 import ShowProducts from "../Pages/Club/Products/ShowProducts";
+import ShowAllNews from "../Pages/Club/News/ShowAllNews";
+import ShowClubNews from "../Pages/Club/News/ShowClubNews";
+import SearchPlayer from "../Pages/Club/Search player/SearchPlayer";
 
 export default function Router() {
   return (
@@ -31,6 +34,9 @@ export default function Router() {
         <Route path="suggested-videos" element={<ShowSuggestionsVideos/>}/>
         <Route path="/suggested-videos/player-info/:id" element={<PlayerInfo/>}/>
         <Route path="product" element={<ShowProducts/>}/>
+        <Route path="all-news" element={<ShowAllNews/>}/>
+        <Route path="club-news" element={<ShowClubNews/>}/>
+        <Route path="search-players" element={<SearchPlayer/>}/>
       </Routes>
     </BrowserRouter>
   );

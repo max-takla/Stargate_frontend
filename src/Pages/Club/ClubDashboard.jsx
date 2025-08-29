@@ -42,7 +42,7 @@ const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
   ({ theme, drawerOpen }) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
-    marginLeft: drawerOpen ? `${drawerWidth}px` : `${miniDrawerWidth}px`,
+    // marginLeft: drawerOpen ? `${drawerWidth}px` : `${miniDrawerWidth}px`,
     transition: theme.transitions.create(["margin", "width"], {
       easing: drawerOpen
         ? theme.transitions.easing.easeOut
@@ -124,13 +124,13 @@ export default function ClubDashboard(props) {
       icon: <WidgetsIcon />,
     },
     {
-      text: t("searsh players"),
-      path: "/searsh-players",
+      text: t("search players"),
+      path: "/search-players",
       icon: <SearchIcon />,
     },
      {
       text: t("news"),
-      path: "/all-new",
+      path: "/all-news",
       icon: <FeedIcon />,
     },
      {

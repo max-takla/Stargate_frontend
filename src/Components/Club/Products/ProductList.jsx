@@ -46,6 +46,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditSquareIcon from "@mui/icons-material/EditSquare";
 import AddProducts from "../../../Pages/Club/Products/AddProducts";
+import UpdateProduct from "../../../Pages/Club/Products/UpdateProduct";
 const BASE_URL = "https://dashboard.stars-gate.com";
 export default function ProductList() {
   const { mainColor, secondColor, hoverColor } = useContext(AppContext);
@@ -151,14 +152,14 @@ export default function ProductList() {
     }
   };
   //handle with update
-  const navigate = useNavigate();
+  const [product, setProduct] = useState({});
   const handleUpdate = (row) => {
-    navigate(`/updateproduct/${row.id}`);
+    setView("update");
+    setProduct(row);
   };
   //handle with more information
   const [indexInfo, setIndexInfo] = useState(0);
   const [openInfo, setOpenInfo] = useState(false);
-  const [product, setProduct] = useState({});
   const handleOpenMoreInfo = (card) => {
     setIndexInfo(card.id);
     setProduct({ ...card });
@@ -654,7 +655,7 @@ export default function ProductList() {
       {view === "add" && (
         <Box
           sx={{
-            display:"flex",
+            display: "flex",
             flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
             gap: { xs: 1, sm: 2 },
@@ -664,7 +665,26 @@ export default function ProductList() {
           <Button
             variant="outlined"
             onClick={() => setView("list")}
-            sx={ commonButtonStyle }
+            sx={commonButtonStyle}
+          >
+            {t("back to products")}
+          </Button>
+        </Box>
+      )}
+      {view === "update" && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: { sm: "space-between" },
+            gap: { xs: 1, sm: 2 },
+          }}
+        >
+          <UpdateProduct product={product} onSuccess={() => setView("list")} />
+          <Button
+            variant="outlined"
+            onClick={() => setView("list")}
+            sx={commonButtonStyle}
           >
             {t("back to products")}
           </Button>

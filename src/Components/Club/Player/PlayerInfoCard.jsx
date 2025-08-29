@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FetchOneUser } from "../../../Api/Main/Users/FetchOneUser";
-import { Avatar, Box, Button, Typography } from "@mui/material";
+import { Avatar, Box, Button, Modal, Typography } from "@mui/material";
 import { AppContext } from "../../../App";
 import { useTranslation } from "react-i18next";
 import HeightIcon from "@mui/icons-material/Height";
@@ -95,8 +95,23 @@ export default function PlayerInfoCard() {
     textTransform: "capitalize",
   };
 
+  // handle with request to join
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => {setOpen(true)};
+  const handleClose = () => setOpen(false);
+  const handleRequest = async () => {};
+  const [request,setRequest]=useState({
+    player_id:"",
+    club_id:"",
+     details: [
+      {
+        price: "",
+        duration: "",
+      },
+    ],
+  })
   return (
-    <>
+    <Box sx={{mt:6}}>
       {loading ? (
         <Typography sx={{ textAlign: "center" }}>{t("Loading...")}</Typography>
       ) : !user ? (
@@ -202,12 +217,52 @@ export default function PlayerInfoCard() {
             type="button"
             variant="contained"
             sx={commonButtonStyle}
-            // onClick={handleCloseBlock}
+            onClick={handleOpen}
           >
             {t("request to join")}
           </Button>
         </Box>
       )}
-    </>
+      <Modal open={open} onClose={handleClose}>
+        <Box
+          sx={{
+            margin: "100px auto",
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+            borderRadius: 8,
+            boxShadow: "0px 4px 10px rgba(0,0,0,0.25)",
+            backgroundColor: "white",
+            border: `1px solid ${secondColor}`,
+            maxWidth: "600px",
+          }}
+        >
+          <Typography variant="h6" sx={{color:'#242424'}}>
+             Are you interested in “{user?.player_name || "loading"}” ?
+          </Typography>
+          <Typography sx={{color:"#242424"}}>
+            please enter these details and confirm your request
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleRequest}
+              sx={commonButtonStyle}
+            >
+              {t("confirm")}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setOpen(false)}
+              sx={commonButtonStyle}
+            >
+              {t("cancle")}
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </Box>
   );
 }

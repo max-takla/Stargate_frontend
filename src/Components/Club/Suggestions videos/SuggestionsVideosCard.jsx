@@ -29,7 +29,7 @@ import { AddRates } from "../../../Api/Club/Suggested/AddRates";
 const BASE_URL = "https://dashboard.stars-gate.com";
 
 export default function SuggestionsVideosCard() {
-  const { mainColor, secondColor, input, en } = useContext(AppContext);
+  const { mainColor, secondColor} = useContext(AppContext);
   const { t } = useTranslation();
 
   const [allCards, setAllCards] = useState([]);

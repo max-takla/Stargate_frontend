@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { Store } from "../../../Api/Club/Products/Store";
 import { GetAllSports } from "../../../Api/Club/InfoApi/GetAllSports";
 import { FetchCategories } from "../../../Api/Club/Products/FetchCategories";
-export default function AddProductsCard() {
+export default function AddProductsCard(prop) {
   const { t } = useTranslation();
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -104,8 +104,8 @@ export default function AddProductsCard() {
       }
       const result = await Store(formData);
       console.log("add product", result);
-      if (result) {
-        navigate("/products");
+     if (result) {
+        prop.onSuccess(); 
       }
     } catch (err) {
       const validationErrors = {};
@@ -169,9 +169,10 @@ export default function AddProductsCard() {
       encType="multipart/form-data"
       sx={{
         p: { xs: 0, sm: 3, md: 5 },
-        display:"flex",
-        flexDirection:"column",
-        gap:2,alignItems:"center",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        alignItems: "center",
         width: { xs: "90%", sm: "80%", md: "900px", lg: "900px" },
         height: { xs: "450px" },
         maxWidth: "90%",
@@ -187,7 +188,14 @@ export default function AddProductsCard() {
       >
         {t("product information")}
       </Typography>
-      <Box sx={{ display: "flex",flexDirection:{xs:"column",sm:"row"}, gap: 3, alignItems: "center" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 3,
+          alignItems: "center",
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -342,120 +350,148 @@ export default function AddProductsCard() {
             />
           </Box>
           <Box
+            component="div"
             sx={{
-              flex: { xs: "1 1 100%", sm: "1 1 60%" },
-              background: "#F5F5F7",
-              padding: 4,
-              textAlign: "center",
+              width: 150,
+              height: 150,
+              margin: "0 auto",
+              borderRadius: "8px",
+              overflow: "hidden",
+              cursor: "pointer",
+              border: "1px solid #ccc",
             }}
+            onClick={() => document.getElementById("fileInput").click()}
           >
-            <input
-              type="file"
-              name="image"
-              id="fileInput"
-              accept="image/png, image/jpeg"
-              onChange={handleChange}
-              style={{
-                display: "none",
-              }}
-            />
-            <Box
-              component="button"
-              onClick={() => document.getElementById("fileInput").click()}
-              sx={{
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                padding: 0,
-                transition: "transform 0.2s ease, opacity 0.2s ease",
-                "&:hover": {
-                  transform: "scale(1.1)",
-                  opacity: 0.8,
-                },
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="70"
-                height="70"
-                viewBox="0 0 20 20"
+            {product.image instanceof File ? (
+              // لو المستخدم رفع صورة جديدة
+              <img
+                src={URL.createObjectURL(product.image)}
+                alt="preview"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              // لو مافي صورة أصلاً
+              <Box
+                sx={{
+                  flex: { xs: "1 1 100%", sm: "1 1 60%" },
+                  background: "#F5F5F7",
+                  padding: 4,
+                  textAlign: "center",
+                }}
               >
-                <g fill="none">
-                  <path
-                    fill="url(#SVGpAhxubuz)"
-                    d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"
-                  />
-                  <path
-                    fill="url(#SVG9oSeOcyx)"
-                    d="m16.122 16.121l-5.238-5.237a1.25 1.25 0 0 0-1.768 0L3.88 16.12A3 3 0 0 0 6 17h8a3 3 0 0 0 2.122-.879"
-                  />
-                  <circle cx="12.5" cy="7.5" r="1.5" fill="url(#SVG3UbN1wRo)" />
-                  <defs>
-                    <linearGradient
-                      id="SVG9oSeOcyx"
-                      x1="8.251"
-                      x2="9.715"
-                      y1="10.518"
-                      y2="17.343"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop stopColor="#b3e0ff" />
-                      <stop offset="1" stopColor="#8cd0ff" />
-                    </linearGradient>
-                    <linearGradient
-                      id="SVG3UbN1wRo"
-                      x1="11.9"
-                      x2="12.996"
-                      y1="5.667"
-                      y2="9.612"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop stopColor="#fdfdfd" />
-                      <stop offset="1" stopColor="#b3e0ff" />
-                    </linearGradient>
-                    <radialGradient
-                      id="SVGpAhxubuz"
-                      cx="0"
-                      cy="0"
-                      r="1"
-                      gradientTransform="rotate(51.687 3.782 -5.018)scale(38.7123 35.2114)"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop offset=".338" stopColor="#0fafff" />
-                      <stop offset=".529" stopColor="#367af2" />
-                    </radialGradient>
-                  </defs>
-                </g>
-              </svg>
-            </Box>
-            <Typography
-              variant="body1"
-              sx={{ fontSize: "12px", color: "#1669B6" }}
-            >
-              {t("upload image")}
-            </Typography>
-            {errors.image && (
-              <Typography variant="caption" color="error">
-                {errors.image}
-              </Typography>
+                <input
+                  type="file"
+                  name="image"
+                  id="fileInput"
+                  accept="image/png, image/jpeg"
+                  onChange={handleChange}
+                  style={{ display: "none" }}
+                />
+                <Box
+                  component="button"
+                  onClick={() => document.getElementById("fileInput").click()}
+                  sx={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    padding: 0,
+                    transition: "transform 0.2s ease, opacity 0.2s ease",
+                    "&:hover": {
+                      transform: "scale(1.1)",
+                      opacity: 0.8,
+                    },
+                  }}
+                >
+                  {/* أيقونة رفع */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="70"
+                    height="70"
+                    viewBox="0 0 20 20"
+                  >
+                    <g fill="none">
+                      <path
+                        fill="url(#SVGpAhxubuz)"
+                        d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"
+                      />
+                      <path
+                        fill="url(#SVG9oSeOcyx)"
+                        d="m16.122 16.121l-5.238-5.237a1.25 1.25 0 0 0-1.768 0L3.88 16.12A3 3 0 0 0 6 17h8a3 3 0 0 0 2.122-.879"
+                      />
+                      <circle
+                        cx="12.5"
+                        cy="7.5"
+                        r="1.5"
+                        fill="url(#SVG3UbN1wRo)"
+                      />
+                      <defs>
+                        <linearGradient
+                          id="SVG9oSeOcyx"
+                          x1="8.251"
+                          x2="9.715"
+                          y1="10.518"
+                          y2="17.343"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop stopColor="#b3e0ff" />
+                          <stop offset="1" stopColor="#8cd0ff" />
+                        </linearGradient>
+                        <linearGradient
+                          id="SVG3UbN1wRo"
+                          x1="11.9"
+                          x2="12.996"
+                          y1="5.667"
+                          y2="9.612"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop stopColor="#fdfdfd" />
+                          <stop offset="1" stopColor="#b3e0ff" />
+                        </linearGradient>
+                        <radialGradient
+                          id="SVGpAhxubuz"
+                          cx="0"
+                          cy="0"
+                          r="1"
+                          gradientTransform="rotate(51.687 3.782 -5.018)scale(38.7123 35.2114)"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop offset=".338" stopColor="#0fafff" />
+                          <stop offset=".529" stopColor="#367af2" />
+                        </radialGradient>
+                      </defs>
+                    </g>
+                  </svg>
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ fontSize: "12px", color: "#1669B6" }}
+                >
+                  {t("upload image")}
+                </Typography>
+                {errors.image && (
+                  <Typography variant="caption" color="error">
+                    {errors.image}
+                  </Typography>
+                )}
+              </Box>
             )}
           </Box>
         </Box>
       </Box>
-        <Button
-          type="submit"
-          variant="contained"
-          sx={{
-            background: mainColor,
-            p: 1,
-            fontWeight: "bold",
-            width: isMobile ? "90px" : "100px",
-            marginRight: 3,
-            "&:hover": { opacity: 0.5 },
-          }}
-        >
-          {t("add")}
-        </Button>
+      <Button
+        type="submit"
+        variant="contained"
+        sx={{
+          background: mainColor,
+          p: 1,
+          fontWeight: "bold",
+          width: isMobile ? "90px" : "100px",
+          marginRight: 3,
+          "&:hover": { opacity: 0.5 },
+        }}
+      >
+        Add Product
+      </Button>
     </Box>
   );
 }
