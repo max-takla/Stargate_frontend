@@ -3,8 +3,14 @@ import {
   Avatar,
   Box,
   Button,
+  Checkbox,
   Collapse,
+  FormControl,
   IconButton,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Select,
   Slider,
   Typography,
 } from "@mui/material";
@@ -15,8 +21,9 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HeightIcon from "@mui/icons-material/Height";
 import MonitorWeightIcon from "@mui/icons-material/MonitorWeight";
 import CakeIcon from "@mui/icons-material/Cake";
-import CachedIcon from '@mui/icons-material/Cached';
+import CachedIcon from "@mui/icons-material/Cached";
 import { FetchAllPlayer } from "../../../Api/Club/Player/FetchAllPlayer";
+import { GetSkills } from "../../../Api/Club/InfoApi/GetSkills";
 
 const BASE_URL = "https://dashboard.stars-gate.com";
 
@@ -26,6 +33,9 @@ export default function SearchCards() {
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [skills, setSkills] = useState([]);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState([]);
 
   const [openAge, setOpenAge] = useState(false);
   const [ageRange, setAgeRange] = useState([0, 0]);
@@ -37,6 +47,13 @@ export default function SearchCards() {
   const [minHeight, setMinHeight] = useState(0);
   const [maxHeight, setMaxHeight] = useState(0);
 
+  const [openWeight, setOpenWeight] = useState(false);
+  const [weightRange, setWeightRange] = useState([0, 0]);
+  const [minWeight, setMinWeight] = useState(0);
+  const [maxWeight, setMaxWeight] = useState(0);
+
+  const [openSkills, setOpenSkills] = useState(false);
+
   const [filteredPlayersOnSearch, setFilteredPlayersOnSearch] = useState([]);
   const [searched, setSearched] = useState(false);
 
@@ -45,6 +62,9 @@ export default function SearchCards() {
   };
   const handleChangeHeight = (event, newValue) => {
     setHeightRange(newValue);
+  };
+  const handleChangeWeight = (event, newValue) => {
+    setWeightRange(newValue);
   };
 
   const calculateAge = (birthdate) => {
@@ -91,11 +111,22 @@ export default function SearchCards() {
           setMaxHeight(maxH);
           setHeightRange([minH, maxH]);
 
+          // calc weight
+          const weights = players
+            .map((p) => parseFloat(p.weight))
+            .filter((w) => !isNaN(w));
+          const minW = Math.min(...weights);
+          const maxW = Math.max(...weights);
+          setMinWeight(minW);
+          setMaxWeight(maxW);
+          setWeightRange([minW, maxW]);
+
           setUsers(
             players.map((p) => ({
               ...p,
               age: calculateAge(p.birthdate),
               heightValue: parseFloat(p.height),
+              weightValue: parseFloat(p.weight),
             }))
           );
         }
@@ -105,21 +136,45 @@ export default function SearchCards() {
         setLoading(false);
       }
     };
+    const fetchSkills = async () => {
+      setLoadingSkills(true);
+      try {
+        const response = await GetSkills();
+        if (response?.data?.skills) {
+          setSkills(response?.data?.skills);
+        }
+      } catch (error) {
+        console.log(error, "faild in fetch skills");
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+    fetchSkills();
     fetchUsers();
   }, []);
 
   // handle search
   const handleSearch = () => {
     setSearched(true);
-    const filtered = users.filter(
-      (p) =>
-        !isNaN(p.age) &&
+    const filtered = users.filter((p) => {
+      const matchesAge =
+        !isNaN(p.age) && p.age >= ageRange[0] && p.age <= ageRange[1];
+      const matchesHeight =
         !isNaN(p.heightValue) &&
-        p.age >= ageRange[0] &&
-        p.age <= ageRange[1] &&
         p.heightValue >= heightRange[0] &&
-        p.heightValue <= heightRange[1]
-    );
+        p.heightValue <= heightRange[1];
+      const matchesWeight =
+        !isNaN(p.weightValue) &&
+        p.weightValue >= weightRange[0] &&
+        p.weightValue <= weightRange[1];
+
+      const matchesSkills =
+        selectedSkills.length === 0 ||
+        JSON.parse(p.skills)?.some((skill) => selectedSkills.includes(skill));
+
+      return matchesAge && matchesHeight && matchesWeight && matchesSkills;
+    });
+    console.log("filtered", filtered);
     setFilteredPlayersOnSearch(filtered);
   };
   const commonButtonStyle = {
@@ -134,7 +189,15 @@ export default function SearchCards() {
   };
 
   return (
-    <Box sx={{ mt: 6, display: "flex", justifyContent: "space-between", p: 3 }}>
+    <Box
+      sx={{
+        mt: 6,
+        display: { xs: "block", md: "flex" },
+        justifyContent: "space-between",
+        p: { xs: 2, md: 3 },
+        gap: { xs: 4, md: 2 },
+      }}
+    >
       {/* content after filter */}
       <Box sx={{ flex: 1 }}>
         {searched ? (
@@ -149,8 +212,8 @@ export default function SearchCards() {
                   borderBottom: "1px solid #D1D5DB",
                 }}
               >
-                <Box sx={{ my: 2, p: 2, maxWidth: "600px" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Box sx={{ my: 2, p: 2, maxWidth: { xs: "100%", md: "600px" } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 , flexWrap: "wrap", gap: 1 }}>
                     <Avatar
                       src={`${BASE_URL}/${user.image || ""}`}
                       alt={user.player_name}
@@ -166,7 +229,7 @@ export default function SearchCards() {
                     </Box>
                   </Box>
 
-                  <Box sx={{ display: "flex", gap: 2 }}>
+                  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap"  }}>
                     <Box
                       sx={{ background: "#F5F5F7", borderRadius: "24px", p: 2 }}
                     >
@@ -207,28 +270,36 @@ export default function SearchCards() {
             </Typography>
           )
         ) : (
-          <Typography mt={5} fontWeight="bold">
-            Filter parameters to locate players
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography mt={5} fontWeight="bold">
+              Filter parameters to locate players
+            </Typography>
+          </Box>
         )}
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Box sx={{display:"flex",gap:2,alignItems:"center"}}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 , mt: { xs: 4, md: 0 } }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
           <Button
-          type="button"
-          variant="contained"
-          sx={commonButtonStyle}
-          onClick={handleSearch}
-        >
-          <SearchIcon /> {t("search")}
-        </Button>
-        <CachedIcon fontSize="large"/>
+            type="button"
+            variant="contained"
+            sx={commonButtonStyle}
+            onClick={handleSearch}
+          >
+            <SearchIcon /> {t("search")}
+          </Button>
+          <CachedIcon fontSize="large" />
         </Box>
         {/* Age Slider */}
         <Box
           sx={{
-            width: 350,
+             width: { xs: "100%", md: 350 },
             border: `1px solid ${secondColor}`,
             p: 5,
             borderRadius: "12px",
@@ -299,7 +370,7 @@ export default function SearchCards() {
         {/* Height Slider */}
         <Box
           sx={{
-            width: 350,
+            width: { xs: "100%", md: 350 },
             border: `1px solid ${secondColor}`,
             p: 5,
             borderRadius: "12px",
@@ -363,6 +434,145 @@ export default function SearchCards() {
                   },
                 }}
               />
+            </Box>
+          </Collapse>
+        </Box>
+        {/* Weight Slider */}
+        <Box
+          sx={{
+             width: { xs: "100%", md: 350 },
+            border: `1px solid ${secondColor}`,
+            p: 5,
+            borderRadius: "12px",
+            backgroundColor: "#fff",
+            boxShadow: "0px 4px 15px rgba(0,0,0,0.1)",
+            transition: "0.3s",
+            "&:hover": {
+              boxShadow: "0px 6px 20px rgba(0,0,0,0.15)",
+              transform: "translateY(-3px)",
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              p: 1,
+              borderRadius: 2,
+              backgroundColor: "#F9FAFB",
+            }}
+            onClick={() => setOpenWeight(!openWeight)}
+          >
+            <Typography>
+              Weight Range: {weightRange[0]} - {weightRange[1]} Kg
+            </Typography>
+            <IconButton
+              size="small"
+              sx={{
+                transform: openWeight ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "0.3s",
+              }}
+            >
+              <ExpandMoreIcon />
+            </IconButton>
+          </Box>
+
+          <Collapse in={openWeight}>
+            <Box sx={{ mt: 2 }}>
+              <Slider
+                value={weightRange}
+                onChange={handleChangeWeight}
+                valueLabelDisplay="auto"
+                min={minWeight}
+                max={maxWeight}
+                step={1}
+                sx={{
+                  height: 25,
+                  color: "primary.main",
+                  "& .MuiSlider-track": { border: "none" },
+                  "& .MuiSlider-thumb": {
+                    width: 20,
+                    height: 20,
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                  },
+                  "& .MuiSlider-rail": {
+                    opacity: 1,
+                    backgroundColor: "#D1D5DB",
+                  },
+                }}
+              />
+            </Box>
+          </Collapse>
+        </Box>
+        {/* Skills Slider */}
+        <Box
+          sx={{
+             width: { xs: "100%", md: 350 },
+            border: `1px solid ${secondColor}`,
+            p: 2,
+            borderRadius: "12px",
+            backgroundColor: "#fff",
+            boxShadow: "0px 4px 15px rgba(0,0,0,0.1)",
+            transition: "0.3s",
+            "&:hover": {
+              boxShadow: "0px 6px 20px rgba(0,0,0,0.15)",
+              transform: "translateY(-3px)",
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              p: 1,
+              borderRadius: 2,
+              backgroundColor: "#F9FAFB",
+            }}
+            onClick={() => setOpenSkills(!openSkills)}
+          >
+            <Typography>
+              Skills:{" "}
+              {selectedSkills.length > 0
+                ? selectedSkills.join(", ")
+                : "Select Skills"}
+            </Typography>
+            <IconButton
+              size="small"
+              sx={{
+                transform: openSkills ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "0.3s",
+              }}
+            >
+              <ExpandMoreIcon />
+            </IconButton>
+          </Box>
+
+          <Collapse in={openSkills}>
+            <Box
+              sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}
+            >
+              {skills.map((skill) => (
+                <Box key={skill.id}>
+                  <Checkbox
+                    checked={selectedSkills.includes(skill.name)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedSkills([...selectedSkills, skill.name]);
+                      } else {
+                        setSelectedSkills(
+                          selectedSkills.filter((s) => s !== skill.name)
+                        );
+                      }
+                    }}
+                  />
+                  <Typography component="span">{skill.name}</Typography>
+                </Box>
+              ))}
             </Box>
           </Collapse>
         </Box>
